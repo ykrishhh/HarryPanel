@@ -41,6 +41,90 @@ I built HarryPanel because existing control panels are either bloated, ugly, or 
 | **Terminal** | WebSocket + xterm.js |
 | **Deployment** | Git, Docker, systemd |
 
+### System Architecture
+
+```mermaid
+graph TB
+    subgraph Frontend["Frontend (HTML5/CSS3/JS)"]
+        UI[Web Dashboard]
+    end
+
+    subgraph Backend["Flask Backend"]
+        App[app.py Entry Point]
+        Auth[auth.py - JWT + bcrypt]
+        FM[file_manager.py]
+        DBA[database.py]
+        Term[terminal.py]
+        Dep[deployer.py]
+        Cron[cron.py]
+        SSL[ssl.py]
+        Docker[docker.py]
+    end
+
+    subgraph Storage["Databases & Storage"]
+        SQLite[(SQLite - Metadata)]
+        MySQL[(MySQL/PostgreSQL - Managed)]
+        FS[Filesystem]
+        DockerEng[Docker Engine]
+    end
+
+    subgraph External["External Services"]
+        Git[GitHub/GitLab]
+        CertBot[Let's Encrypt]
+    end
+
+    UI -->|HTTP + WS| App
+    App --> Auth & FM & DBA & Term & Dep & Cron & SSL & Docker
+    Auth --> SQLite
+    FM --> FS
+    DBA --> MySQL & SQLite
+    Term -->|WebSocket| App
+    Dep --> Git
+    SSL --> CertBot
+    Docker --> DockerEng
+```
+
+### Deployment Flow
+
+```mermaid
+flowchart LR
+    A[git clone] --> B[pip install -r requirements.txt]
+    B --> C[python init_db.py]
+    C --> D[python app.py]
+    D --> E[http://server:5000]
+    E --> F[Login: admin/admin]
+    F --> G[Dashboard Ready]
+
+    style A fill:#4CAF50,color:#fff
+    style C fill:#2196F3,color:#fff
+    style E fill:#FF9800,color:#fff
+```
+
+### Component Relationships
+
+```mermaid
+graph LR
+    Auth --> FM
+    Auth --> DBA
+    Auth --> Term
+    Auth --> Dep
+    Auth --> Cron
+    Auth --> SSL
+
+    FM --> FileOps[File Operations]
+    DBA --> QueryEngine[Query Engine]
+    Term --> WebSocket[WebSocket Server]
+    Dep --> GitEngine[Git Integration]
+    Cron --> Scheduler[Task Scheduler]
+    SSL --> CertManager[Certificate Manager]
+    Docker --> ContainerMgr[Container Manager]
+
+    FileOps --> FS2[Server Filesystem]
+    QueryEngine --> DBs[MySQL / PostgreSQL / SQLite]
+    GitEngine --> Remote[GitHub / GitLab]
+    ContainerMgr --> DockerDaemon[Docker Daemon]
+```
+
 ## Quick Start
 
 ```bash
