@@ -1,18 +1,19 @@
-<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-  <rect x="0" y="0" width="400" height="200" fill="#111118" rx="10"/>
-  <g transform="translate(50, 50)">
-    <rect x="0" y="0" width="40" height="100" fill="#2b2b2b" rx="5"/>
-    <rect x="50" y="0" width="40" height="100" fill="#2b2b2b" rx="5"/>
-    <rect x="100" y="0" width="40" height="100" fill="#2b2b2b" rx="5"/>
-    <rect x="150" y="0" width="40" height="100" fill="#2b2b2b" rx="5"/>
-    <line x1="10" y1="50" x2="30" y2="50" stroke="#6c5ce7" stroke-width="5"/>
-    <line x1="60" y1="50" x2="80" y2="50" stroke="#6c5ce7" stroke-width="5"/>
-    <line x1="110" y1="50" x2="130" y2="50" stroke="#6c5ce7" stroke-width="5"/>
-    <line x1="160" y1="50" x2="180" y2="50" stroke="#6c5ce7" stroke-width="5"/>
-  </g>
-  <text x="220" y="70" font-size="40" font-family="Arial" fill="#fff">HARRYPANEL</text>
-  <text x="220" y="120" font-size="20" font-family="Arial" fill="#6c5ce7">v8.0</text>
-  <rect x="350" y="150" width="30" height="30" fill="#6c5ce7" rx="5"/>
-  <rect x="320" y="150" width="30" height="30" fill="#6c5ce7" rx="5"/>
-  <rect x="290" y="150" width="30" height="30" fill="#6c5ce7" rx="5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="400" height="200">
+  <rect width="400" height="200" fill="#0a0a0f" rx="12"/>
+  <rect x="1" y="1" width="398" height="198" fill="none" stroke="#6c5ce7" stroke-opacity="0.2" rx="11"/>
+  <!-- Server stack -->
+  <rect x="170" y="35" width="60" height="20" rx="3" fill="none" stroke="#6c5ce7" stroke-width="1.5"/>
+  <rect x="170" y="60" width="60" height="20" rx="3" fill="none" stroke="#6c5ce7" stroke-width="1.5"/>
+  <rect x="170" y="85" width="60" height="20" rx="3" fill="none" stroke="#6c5ce7" stroke-width="1.5"/>
+  <!-- Server LEDs -->
+  <circle cx="182" cy="45" r="3" fill="#27c93f"/>
+  <circle cx="182" cy="70" r="3" fill="#6c5ce7"/>
+  <circle cx="182" cy="95" r="3" fill="#ff5f56"/>
+  <!-- Server lines -->
+  <line x1="195" y1="45" x2="215" y2="45" stroke="#6c5ce7" stroke-opacity="0.4" stroke-width="1"/>
+  <line x1="195" y1="70" x2="220" y2="70" stroke="#6c5ce7" stroke-opacity="0.4" stroke-width="1"/>
+  <line x1="195" y1="95" x2="210" y2="95" stroke="#6c5ce7" stroke-opacity="0.4" stroke-width="1"/>
+  <!-- Text -->
+  <text x="200" y="140" text-anchor="middle" font-family="'Courier New', monospace" font-size="20" fill="#6c5ce7" font-weight="bold" letter-spacing="3">HARRYPANEL</text>
+  <text x="200" y="160" text-anchor="middle" font-family="'Courier New', monospace" font-size="12" fill="#6c5ce7" fill-opacity="0.6">v8.0 Control Panel</text>
 </svg>
