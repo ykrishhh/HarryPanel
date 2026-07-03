@@ -1,26 +1,33 @@
-# HarryPanel
-<img src="assets/logo.svg" alt="HarryPanel v8.0" width="400" height="200">
+<div align="center">
 
-[![Version](https://img.shields.io/badge/Version-8.0-purple)](https://github.com/ykrishhh/HarryPanel)
-[![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python&logoColor=white)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<img src="assets/logo.svg" width="400" alt="HarryPanel v8.0">
 
-> Advanced web hosting control panel — server management, database admin, file manager, and deployment tools.
+# HarryPanel v8.0
+
+> Advanced web hosting control panel — server management, database admin, file manager.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/ykrishhh/HarryPanel?style=for-the-badge&color=purple)](https://github.com/ykrishhh/HarryPanel)
+
+</div>
+
+---
 
 ## Features
 
-- **Server Management** — Process monitoring, service control
-- **Database Admin** — SQLite browser, query editor
-- **File Manager** — Upload, download, edit files
-- **Deployment** — Git pull, build, restart workflows
-- **APK Scanner** — Security analysis for Android packages
-- **SocketIO** — Real-time updates
+| Feature | Description |
+|----------|-------------|
+| Server Management | Process monitoring, service control |
+| Database Admin | SQLite browser, query editor |
+| File Manager | Upload, download, edit files |
+| Deployment | Git pull, build, restart workflows |
+| APK Scanner | Security analysis for Android packages |
 
-## Tech Stack
+### Tech Stack
 
-    
+`Python` `Flask` `SQLite` `SocketIO` `HTML/CSS/JS`
 
-## Quick Start
+### Quick Start
 
 ```bash
 cd harry-backend
@@ -28,8 +35,25 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Open http://localhost:5000
+## Quick Start
+
+```bash
+git clone https://github.com/ykrishhh/HarryPanel.git
+cd HarryPanel
+```
+
+## Contributing
+
+Contributions welcome!
 
 ## License
 
-MIT — Built by [ykrishhh](https://github.com/ykrishhh)
+[MIT License](LICENSE) — Built by [ykrishhh](https://github.com/ykrishhh)
+
+---
+
+<div align="center">
+
+**Star this repo if you find it useful!** ⭐
+
+</div>
