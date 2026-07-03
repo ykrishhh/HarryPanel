@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "cd harry-backend && python app.py",
+    "startCommand": "cd harry-backend && gunicorn app:app --worker-class eventlet -w 1",
     "healthcheckPath": "/",
     "healthcheckTimeout": 10
   }
