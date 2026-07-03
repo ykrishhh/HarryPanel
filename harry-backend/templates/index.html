@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HarryPanel v8.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+@keyframes shimmer{0%{background-position:-400% center}100%{background-position:400% center}}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-14px) rotate(2deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes numPop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ripple{0%{transform:scale(0);opacity:.7}100%{transform:scale(3);opacity:0}}
+@keyframes modalIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes connNew{0%{opacity:0;transform:translateX(-100%)}100%{opacity:1;transform:translateX(0)}}
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#05090e;--bg2:#080d14;--bg3:#0c1420;--bg4:#101c2e;--bg5:#14243a;
+  --gold:#00d4ff;--gold2:#22e5ff;--gold3:#80f0ff;--gold4:#b8f8ff;
+  --gold-dim:rgba(0,212,255,.14);--gold-glow:rgba(0,212,255,.35);
+  --amber:#0088ff;--copper:#1a5aff;
+  --rose:#ff6b6b;--mint:#00d4aa;--sky:#38bdf8;--lilac:#c084fc;--lime:#a3e635;
+  --text:#d4eef5;--sub:#3a6a8a;--dim:#1a3a50;
+  --border:rgba(0,212,255,.1);--border2:rgba(0,212,255,.28);
+  --r8:8px;--r12:12px;--r16:16px;--r20:20px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{color:var(--text);font-family:'Exo 2',sans-serif;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--sub)}
+
+/* LAYOUT */
+.panel{display:flex;height:100vh;flex-direction:column}
+.topbar{background:linear-gradient(90deg,rgba(8,13,20,.97),rgba(12,18,28,.97));border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;gap:12px;padding:0 20px;flex-shrink:0;position:relative}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,.7),rgba(0,136,255,.5),transparent)}
+.tb-dots{display:flex;gap:7px}
+.td{width:13px;height:13px;border-radius:50%;cursor:pointer;transition:all .18s}
+.td:hover{filter:brightness(1.3);transform:scale(1.12)}
+.td-r{background:#ff5f57}.td-y{background:#febc2e}.td-g{background:#28c840}
+.tb-logo{font-size:16px;font-weight:800;letter-spacing:-.2px}
+.tb-gl{background:linear-gradient(90deg,#00d4ff,#22e5ff,#80f0ff,#00d4ff);background-size:300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3.5s linear infinite}
+.tb-pills{display:flex;gap:6px;margin-right:auto}
+.pill{font-size:10px;font-weight:700;padding:4px 11px;border-radius:20px;letter-spacing:.3px}
+.p-t{background:rgba(0,212,255,.12);color:var(--gold2)}
+.p-on{background:rgba(0,212,170,.1);color:var(--mint)}
+.p-off{background:rgba(255,107,107,.09);color:var(--rose)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint);animation:pulse 2s infinite}
+.body{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sb{width:274px;flex-shrink:0;background:linear-gradient(180deg,var(--bg2),var(--bg));border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s cubic-bezier(.22,1,.36,1)}
+.sb-list{flex:1;overflow-y:auto;padding:8px 0}
+.sb-item{padding:12px 16px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:11px;border-left:3px solid transparent}
+.sb-item:hover{background:rgba(0,212,255,.04)}
+.sb-item.active{background:rgba(0,212,255,.08);border-left-color:var(--gold)}
+.sb-item.active .sb-label{color:var(--gold2)}
+.sb-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--bg4),var(--bg5));border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.sb-text{flex:1;min-width:0}
+.sb-label{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-sub{font-size:10px;color:var(--dim);font-family:'Share Tech Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.sb-brand{text-align:center;padding:11px;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--dim);border-top:1px solid var(--border)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.tabs{display:flex;padding:0 18px;background:linear-gradient(90deg,rgba(8,13,20,.98),rgba(12,18,28,.98));border-bottom:1px solid var(--border);flex-shrink:0;gap:2px;overflow-x:auto}
+.tabs::-webkit-scrollbar{height:0}
+.tab{padding:14px 16px;font-size:12px;font-weight:600;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;letter-spacing:.2px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--gold2);border-bottom-color:var(--gold)}
+.tab-body{flex:1;overflow-y:auto;padding:22px}
+.pane{display:none}.pane.active{display:block;animation:fadeUp .22s ease}
+
+/* OVERVIEW */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:24px}
+.sc{background:linear-gradient(145deg,var(--bg3),var(--bg2));border:1px solid var(--border);border-radius:20px;padding:22px 20px;position:relative;overflow:hidden;cursor:default;transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s}
+.sc:hover{transform:translateY(-4px);box-shadow:0 18px 50px rgba(0,0,0,.5),0 0 30px rgba(0,212,255,.05)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0}
+.sc-g::before{background:linear-gradient(90deg,#00d4ff,#22e5ff)}
+.sc-a::before{background:linear-gradient(90deg,#00d4aa,#38bdf8)}
+.sc-r::before{background:linear-gradient(90deg,#ff6b6b,#ff8c00)}
+.sc-p::before{background:linear-gradient(90deg,#c084fc,#00d4ff)}
+.sv{font-size:50px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:5px;animation:numPop .4s ease}
+.sl{font-size:10px;font-weight:600;color:var(--sub);letter-spacing:1px;text-transform:uppercase}
+
+.sec-hdr{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sub);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.sec-hdr::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.tbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:22px}
+.tbl-wrap table{width:100%;border-collapse:collapse}
+.tbl-wrap th{padding:10px 16px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sub);text-align:left;background:var(--bg3)}
+.tbl-wrap td{padding:13px 16px;font-size:12px;border-top:1px solid rgba(0,212,255,.04);font-weight:600}
+.tbl-wrap tbody tr{cursor:pointer;transition:background .1s}
+.tbl-wrap tbody tr:hover{background:rgba(0,212,255,.04)}
+
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px}
+.b-on{background:rgba(0,212,170,.12);color:var(--mint)}
+.b-off{background:rgba(255,107,107,.1);color:var(--rose)}
+.b-gold{background:rgba(0,212,255,.12);color:var(--gold2)}
+.b-unk{background:rgba(234,179,8,.1);color:var(--yellow)}
+
+/* PROGRESS */
+.pbar{width:100%;height:5px;background:rgba(255,255,255,.07);border-radius:5px;margin-top:9px;overflow:hidden}
+.pfill{height:100%;border-radius:5px;transition:width .7s cubic-bezier(.22,1,.36,1)}
+
+/* FILE MANAGER */
+.file-path{font-family:'Share Tech Mono',monospace;color:var(--gold);margin-bottom:12px;font-size:.85px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.file-path span{cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .15s;font-size:12px}
+.file-path span:hover{background:rgba(0,212,255,.1)}
+.file-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;cursor:pointer;transition:all .15s;border-bottom:1px solid rgba(0,212,255,.04)}
+.file-item:hover{background:rgba(0,212,255,.04)}
+.file-icon{color:var(--gold);font-size:17px;width:28px;text-align:center;flex-shrink:0}
+.file-name{flex:1;font-size:13px;font-weight:600}
+.file-meta{font-size:10px;color:var(--sub);font-family:'Share Tech Mono',monospace}
+
+/* DATABASE */
+.db-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.db-chip{padding:10px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:11px;color:var(--sub);font-family:'Exo 2',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s}
+.db-chip:hover{color:var(--text);border-color:var(--border2);background:var(--bg4)}
+.db-chip.active{background:var(--gold-dim);border-color:rgba(0,212,255,.35);color:var(--gold2)}
+textarea.db-query{width:100%;min-height:80px;background:rgba(16,28,46,.7);border:1px solid rgba(0,212,255,.12);border-radius:11px;padding:13px 16px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:13px;resize:vertical;outline:none;transition:border-color .2s,box-shadow .2s}
+textarea.db-query:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(0,212,255,.1)}
+textarea.db-query::placeholder{color:var(--dim)}
+.btn{padding:13px 24px;border:none;border-radius:12px;color:#020810;font-family:'Exo 2',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#22e5ff,#00d4ff,#0088ff);box-shadow:0 6px 30px rgba(0,212,255,.4),inset 0 1px 0 rgba(255,255,255,.25);transition:all .25s cubic-bezier(.22,1,.36,1);letter-spacing:.3px}
+.btn:hover{transform:translateY(-3px);box-shadow:0 14px 42px rgba(0,212,255,.55)}
+
+/* TERMINAL */
+.terminal{background:#000;border-radius:16px;border:1px solid var(--border);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.term-hdr{background:var(--bg3);padding:10px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.term-dot{width:13px;height:13px;border-radius:50%;cursor:pointer;transition:all .18s}
+.term-dot:hover{filter:brightness(1.3);transform:scale(1.12)}
+.td-r{background:#ff5f57}.td-y{background:#febc2e}.td-g{background:#28c840}
+.term-title{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--sub);margin-left:8px}
+.term-body{padding:16px;font-family:'Share Tech Mono',monospace;font-size:13px;max-height:500px;overflow-y:auto;color:var(--mint);line-height:1.6}
+.term-line{margin-bottom:4px;white-space:pre-wrap;word-break:break-all}
+.term-line .prompt{color:var(--gold)}
+.term-input{display:flex;align-items:center;gap:8px;padding:0 16px 16px}
+.term-input input{flex:1;background:transparent;border:none;color:var(--mint);font-family:'Share Tech Mono',monospace;font-size:13px;outline:none}
+
+/* DEPLOY */
+.deploy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:13px}
+.di{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:16px;transition:border-color .2s,transform .18s cubic-bezier(.22,1,.36,1)}
+.di:hover{border-color:var(--border2);transform:translateY(-2px)}
+.di-l{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.di-v{font-size:16px;font-weight:600;color:var(--text);word-break:break-all;line-height:1.3}
+.di-v.mono{font-family:'Share Tech Mono',monospace;font-size:12px}
+.di-v a{color:var(--gold);text-decoration:none}
+.di-v a:hover{text-decoration:underline}
+
+@media(max-width:768px){
+  .sb{width:60px}.sb-text,.sb-brand,.tb-pills{display:none}
+  .sb-item{justify-content:center;padding:14px 0}
+  .main{margin-left:0}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-dots">
+      <div class="td td-r"></div><div class="td td-y"></div><div class="td td-g"></div>
+    </div>
+    <div class="tb-logo"><span class="tb-gl">HARRYPANEL</span></div>
+    <div class="tb-pills">
+      <span class="pill p-t">v8.0</span>
+      <span class="pill p-on"><span class="live-dot" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>ONLINE</span>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- SIDEBAR -->
+    <div class="sb">
+      <div class="sb-list">
+        <div class="sb-item active" data-page="overview">
+          <div class="sb-icon">&#9673;</div>
+          <div class="sb-text"><div class="sb-label">Overview</div><div class="sb-sub">server metrics</div></div>
+        </div>
+        <div class="sb-item" data-page="files">
+          <div class="sb-icon">&#128193;</div>
+          <div class="sb-text"><div class="sb-label">File Manager</div><div class="sb-sub">browse & edit</div></div>
+        </div>
+        <div class="sb-item" data-page="database">
+          <div class="sb-icon">&#9851;</div>
+          <div class="sb-text"><div class="sb-label">Database</div><div class="sb-sub">sqlite admin</div></div>
+        </div>
+        <div class="sb-item" data-page="terminal">
+          <div class="sb-icon">&#9618;</div>
+          <div class="sb-text"><div class="sb-label">Terminal</div><div class="sb-sub">remote shell</div></div>
+        </div>
+        <div class="sb-item" data-page="deploy">
+          <div class="sb-icon">&#9889;</div>
+          <div class="sb-text"><div class="sb-label">Deploy</div><div class="sb-sub">railway</div></div>
+        </div>
+      </div>
+      <div class="sb-brand">harrypanel</div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="tabs">
+        <div class="tab active" data-page="overview">Overview</div>
+        <div class="tab" data-page="files">Files</div>
+        <div class="tab" data-page="database">Database</div>
+        <div class="tab" data-page="terminal">Terminal</div>
+        <div class="tab" data-page="deploy">Deploy</div>
+      </div>
+      <div class="tab-body">
+
+        <!-- OVERVIEW -->
+        <div class="pane active" id="page-overview">
+          <div class="stat-grid">
+            <div class="sc sc-g">
+              <div class="sv" id="cpu-val">--</div>
+              <div class="sl">CPU Usage</div>
+              <div class="pbar"><div class="pfill" id="cpu-bar" style="width:0%;background:linear-gradient(90deg,#00d4ff,#22e5ff)"></div></div>
+            </div>
+            <div class="sc sc-a">
+              <div class="sv" id="mem-val">--</div>
+              <div class="sl">Memory</div>
+              <div class="pbar"><div class="pfill" id="mem-bar" style="width:0%;background:linear-gradient(90deg,#00d4aa,#38bdf8)"></div></div>
+            </div>
+            <div class="sc sc-r">
+              <div class="sv" id="disk-val">--</div>
+              <div class="sl">Disk</div>
+              <div class="pbar"><div class="pfill" id="disk-bar" style="width:0%;background:linear-gradient(90deg,#ff6b6b,#ff8c00)"></div></div>
+            </div>
+            <div class="sc sc-p">
+              <div class="sv" id="uptime-val">--</div>
+              <div class="sl">Uptime</div>
+            </div>
+          </div>
+
+          <div class="sec-hdr">Processes</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>PID</th><th>Name</th><th>CPU%</th><th>Mem%</th><th>Status</th></tr></thead>
+              <tbody id="proc-table"></tbody>
+            </table>
+          </div>
+
+          <div class="sec-hdr">Services</div>
+          <div id="services-list" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        </div>
+
+        <!-- FILES -->
+        <div class="pane" id="page-files">
+          <div class="sec-hdr">File Manager</div>
+          <div class="tbl-wrap" style="padding:16px">
+            <div class="file-path" id="file-breadcrumb"></div>
+            <div id="file-list"></div>
+          </div>
+        </div>
+
+        <!-- DATABASE -->
+        <div class="pane" id="page-database">
+          <div class="sec-hdr">SQLite Databases</div>
+          <div class="db-list" id="db-list"></div>
+          <div class="sec-hdr">Query Editor</div>
+          <div class="tbl-wrap" style="padding:16px">
+            <textarea class="db-query" id="db-query" placeholder="SELECT * FROM table_name LIMIT 10;"></textarea>
+            <div style="margin-top:12px"><button class="btn" onclick="runQuery()">Execute Query</button></div>
+          </div>
+          <div class="sec-hdr" style="margin-top:18px">Results</div>
+          <div class="tbl-wrap">
+            <table><thead id="db-thead"></thead><tbody id="db-tbody"></tbody></table>
+          </div>
+        </div>
+
+        <!-- TERMINAL -->
+        <div class="pane" id="page-terminal">
+          <div class="terminal">
+            <div class="term-hdr">
+              <div class="term-dot td-r"></div><div class="term-dot td-y"></div><div class="term-dot td-g"></div>
+              <div class="term-title">harrypanel ~ bash</div>
+            </div>
+            <div class="term-body" id="term-output"></div>
+            <div class="term-input">
+              <span style="color:var(--gold)">$</span>
+              <input type="text" id="term-input" placeholder="Enter command..." autofocus>
+            </div>
+          </div>
+        </div>
+
+        <!-- DEPLOY -->
+        <div class="pane" id="page-deploy">
+          <div class="sec-hdr">Deployment Status</div>
+          <div class="deploy-grid" id="deploy-info"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// NAV
+function switchPage(p){
+  document.querySelectorAll('.sb-item').forEach(i=>{i.classList.toggle('active',i.dataset.page===p)});
+  document.querySelectorAll('.tab').forEach(t=>{t.classList.toggle('active',t.dataset.page===p)});
+  document.querySelectorAll('.pane').forEach(n=>{n.classList.toggle('active',n.id==='page-'+p)});
+}
+document.querySelectorAll('.sb-item, .tab').forEach(el=>{el.addEventListener('click',()=>switchPage(el.dataset.page))});
+
+// HELPERS
+function fmtBytes(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(1)+' GB'}
+function fmtUptime(s){const d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60);return d>0?d+'d '+h+'h':h+'h '+m+'m'}
+
+// OVERVIEW
+async function loadOverview(){
+  try{
+    const r=await fetch('/api/server/info');const d=await r.json();
+    document.getElementById('cpu-val').textContent=d.cpu.percent+'%';
+    document.getElementById('cpu-bar').style.width=d.cpu.percent+'%';
+    document.getElementById('mem-val').textContent=d.memory.percent+'%';
+    document.getElementById('mem-bar').style.width=d.memory.percent+'%';
+    document.getElementById('disk-val').textContent=d.disk.percent+'%';
+    document.getElementById('disk-bar').style.width=d.disk.percent+'%';
+    document.getElementById('uptime-val').textContent=fmtUptime(d.uptime);
+  }catch(e){}
+  try{
+    const r=await fetch('/api/server/processes');const p=await r.json();
+    document.getElementById('proc-table').innerHTML=p.slice(0,20).map(x=>`<tr><td>${x.pid}</td><td>${x.name}</td><td>${x.cpu.toFixed(1)}</td><td>${x.memory}</td><td><span class="badge ${x.status==='running'?'b-on':'b-off'}">${x.status}</span></td></tr>`).join('');
+  }catch(e){}
+  try{
+    const r=await fetch('/api/server/services');const s=await r.json();
+    document.getElementById('services-list').innerHTML=s.map(x=>`<span class="badge ${x.status==='active'?'b-on':x.status==='unknown'?'b-unk':'b-off'}">${x.name}: ${x.status}</span>`).join('');
+  }catch(e){}
+}
+
+// FILES
+let curPath='~';
+async function loadFiles(path){
+  curPath=path||'~';
+  try{
+    const r=await fetch('/api/files/list?path='+encodeURIComponent(curPath));const d=await r.json();
+    if(d.error){document.getElementById('file-list').innerHTML=`<div style="padding:12px;color:var(--rose)">${d.error}</div>`;return}
+    const parts=d.path.split('/').filter(Boolean);
+    document.getElementById('file-breadcrumb').innerHTML=parts.map((p,i)=>{
+      const full='/'+parts.slice(0,i+1).join('/');
+      return `<span onclick="loadFiles('${full.replace(/'/g,"\\'")}')">${p}</span>`;
+    }).join(' <span style="color:var(--sub)">/</span> ');
+    document.getElementById('file-list').innerHTML=d.entries.map(e=>{
+      const icon=e.is_dir?'&#128193;':'&#128196;';
+      return `<div class="file-item" onclick="${e.is_dir?`loadFiles('${e.path.replace(/'/g,"\\'")}')`:''}"><div class="file-icon">${icon}</div><div class="file-name">${e.name}</div><div class="file-meta">${e.is_dir?'DIR':fmtBytes(e.size)}</div></div>`;
+    }).join('');
+  }catch(e){}
+}
+
+// DATABASE
+let selDb='';
+async function loadDbs(){
+  try{
+    const r=await fetch('/api/db/list');const d=await r.json();
+    document.getElementById('db-list').innerHTML=d.length?d.map(x=>`<div class="db-chip" onclick="selDb='${x.path.replace(/'/g,"\\'")}';document.querySelectorAll('.db-chip').forEach(c=>c.classList.remove('active'));this.classList.add('active')">${x.name} (${fmtBytes(x.size)})</div>`).join(''):'<span style="color:var(--sub);font-size:13px">No SQLite databases found</span>';
+  }catch(e){}
+}
+async function runQuery(){
+  if(!selDb){alert('Select a database first');return}
+  const q=document.getElementById('db-query').value;
+  try{
+    const r=await fetch('/api/db/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:selDb,query:q})});
+    const d=await r.json();
+    if(d.error){document.getElementById('db-tbody').innerHTML=`<tr><td style="color:var(--rose)">${d.error}</td></tr>`;document.getElementById('db-thead').innerHTML='';return}
+    if(d.rows&&d.rows.length){
+      const cols=Object.keys(d.rows[0]);
+      document.getElementById('db-thead').innerHTML='<tr>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr>';
+      document.getElementById('db-tbody').innerHTML=d.rows.map(r=>'<tr>'+cols.map(c=>`<td>${r[c]??''}</td>`).join('')+'</tr>').join('');
+    }else{
+      document.getElementById('db-thead').innerHTML='';
+      document.getElementById('db-tbody').innerHTML=`<tr><td>${d.affected!==undefined?d.affected+' rows affected':'No results'}</td></tr>`;
+    }
+  }catch(e){alert('Query failed')}
+}
+
+// TERMINAL
+const socket=io();
+socket.on('terminal_output',d=>{
+  const l=document.createElement('div');l.className='term-line';l.textContent=d.output;
+  document.getElementById('term-output').appendChild(l);
+  document.getElementById('term-output').scrollTop=99999;
+});
+document.getElementById('term-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.value.trim()){
+    const cmd=e.target.value.trim();
+    const l=document.createElement('div');l.className='term-line';
+    l.innerHTML=`<span class="prompt">$</span> ${cmd}`;
+    document.getElementById('term-output').appendChild(l);
+    socket.emit('terminal_exec',{command:cmd});
+    e.target.value='';
+  }
+});
+
+// DEPLOY
+async function loadDeploy(){
+  try{
+    const r=await fetch('/api/deploy/status');const d=await r.json();
+    document.getElementById('deploy-info').innerHTML=`
+      <div class="di"><div class="di-l">Repository</div><div class="di-v mono">${d.repo}</div></div>
+      <div class="di"><div class="di-l">Branch</div><div class="di-v mono">${d.branch}</div></div>
+      <div class="di"><div class="di-l">Status</div><div class="di-v"><span class="badge b-on">${d.status}</span></div></div>
+      <div class="di"><div class="di-l">URL</div><div class="di-v"><a href="${d.url}">${d.url}</a></div></div>
+      <div class="di"><div class="di-l">Last Deploy</div><div class="di-v mono">${new Date(d.last_deploy).toLocaleString()}</div></div>`;
+  }catch(e){}
+}
+
+// INIT
+loadOverview();loadFiles('~');loadDbs();loadDeploy();
+setInterval(loadOverview,5000);
+</script>
+</body>
+</html>

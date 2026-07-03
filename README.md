@@ -6,8 +6,8 @@
 
 > Advanced web hosting control panel — server management, database admin, file manager.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/ykrishhh/HarryPanel?style=for-the-badge&color=purple)](https://github.com/ykrishhh/HarryPanel)
+[![License: MIT](https://img.shields.io/badge/License-MIT-cyan.svg?style=for-the-badge)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/ykrishhh/HarryPanel?style=for-the-badge&color=cyan)](https://github.com/ykrishhh/HarryPanel)
 
 </div>
 
@@ -17,29 +17,39 @@
 
 | Feature | Description |
 |----------|-------------|
-| Server Management | Process monitoring, service control |
+| Server Overview | CPU, memory, disk monitoring with real-time graphs |
+| Process Manager | Top processes by CPU/memory usage |
+| Service Monitor | Check status of system services |
+| File Manager | Browse directories, view files |
 | Database Admin | SQLite browser, query editor |
-| File Manager | Upload, download, edit files |
-| Deployment | Git pull, build, restart workflows |
-| APK Scanner | Security analysis for Android packages |
+| Terminal | Remote shell with SocketIO |
+| Deployment | Railway-ready with one-click deploy |
 
 ### Tech Stack
 
-`Python` `Flask` `SQLite` `SocketIO` `HTML/CSS/JS`
+`Python` `Flask` `SocketIO` `SQLite` `HTML/CSS/JS`
 
 ### Quick Start
 
 ```bash
-cd harry-backend
+git clone https://github.com/ykrishhh/HarryPanel.git
+cd HarryPanel/harry-backend
 pip install -r requirements.txt
 python app.py
 ```
 
-## Quick Start
+Open `http://localhost:5000`
+
+### Deploy to Railway
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template/HarryPanel)
+
+Or manually:
 
 ```bash
-git clone https://github.com/ykrishhh/HarryPanel.git
-cd HarryPanel
+railway login
+railway init
+railway up
 ```
 
 ## Contributing
