@@ -1,244 +1,35 @@
-<div align="center">
-
 # HarryPanel
+<img src="assets/logo.svg" alt="HarryPanel v8.0" width="400" height="200">
 
-**Advanced Web Hosting Control Panel**
+[![Version](https://img.shields.io/badge/Version-8.0-purple)](https://github.com/ykrishhh/HarryPanel)
+[![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python&logoColor=white)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A modern, self-hosted control panel for server management — database admin, file manager, deployment tools, and more.
-
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/ykrishhh/HarryPanel?style=for-the-badge&color=yellow)](https://github.com/ykrishhh/HarryPanel)
-[![PRs](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](https://github.com/ykrishhh/HarryPanel/pulls)
-
-</div>
-
----
-
-I built HarryPanel because existing control panels are either bloated, ugly, or locked behind paywalls. This one is lightweight, fast, and actually pleasant to use.
+> Advanced web hosting control panel — server management, database admin, file manager, and deployment tools.
 
 ## Features
 
-- **Dashboard** — Server stats at a glance: CPU, RAM, disk, network, uptime
-- **File Manager** — Browse, upload, download, edit files directly in the browser
-- **Database Admin** — MySQL/PostgreSQL/SQLite management with query editor
-- **Terminal** — Web-based SSH terminal for remote server access
-- **Deployment** — One-click deployments from GitHub/GitLab repos
-- **Cron Jobs** — Schedule and manage cron tasks with a visual editor
-- **SSL Manager** — Auto-install Let's Encrypt certificates
-- **User Management** — Multi-user access with role-based permissions
-- **Backup** — Automated backups with restore functionality
-- **Docker** — Container management and docker-compose deployment
+- **Server Management** — Process monitoring, service control
+- **Database Admin** — SQLite browser, query editor
+- **File Manager** — Upload, download, edit files
+- **Deployment** — Git pull, build, restart workflows
+- **APK Scanner** — Security analysis for Android packages
+- **SocketIO** — Real-time updates
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
-| **Backend** | Python, Flask |
-| **Frontend** | HTML5, CSS3, JavaScript |
-| **Database** | SQLite (metadata), MySQL/PostgreSQL (managed) |
-| **Auth** | JWT + bcrypt |
-| **Terminal** | WebSocket + xterm.js |
-| **Deployment** | Git, Docker, systemd |
-
-### System Architecture
-
-```mermaid
-graph TB
-    subgraph Frontend["Frontend (HTML5/CSS3/JS)"]
-        UI[Web Dashboard]
-    end
-
-    subgraph Backend["Flask Backend"]
-        App[app.py Entry Point]
-        Auth[auth.py - JWT + bcrypt]
-        FM[file_manager.py]
-        DBA[database.py]
-        Term[terminal.py]
-        Dep[deployer.py]
-        Cron[cron.py]
-        SSL[ssl.py]
-        Docker[docker.py]
-    end
-
-    subgraph Storage["Databases & Storage"]
-        SQLite[(SQLite - Metadata)]
-        MySQL[(MySQL/PostgreSQL - Managed)]
-        FS[Filesystem]
-        DockerEng[Docker Engine]
-    end
-
-    subgraph External["External Services"]
-        Git[GitHub/GitLab]
-        CertBot[Let's Encrypt]
-    end
-
-    UI -->|HTTP + WS| App
-    App --> Auth & FM & DBA & Term & Dep & Cron & SSL & Docker
-    Auth --> SQLite
-    FM --> FS
-    DBA --> MySQL & SQLite
-    Term -->|WebSocket| App
-    Dep --> Git
-    SSL --> CertBot
-    Docker --> DockerEng
-```
-
-### Deployment Flow
-
-```mermaid
-flowchart LR
-    A[git clone] --> B[pip install -r requirements.txt]
-    B --> C[python init_db.py]
-    C --> D[python app.py]
-    D --> E[http://server:5000]
-    E --> F[Login: admin/admin]
-    F --> G[Dashboard Ready]
-
-    style A fill:#4CAF50,color:#fff
-    style C fill:#2196F3,color:#fff
-    style E fill:#FF9800,color:#fff
-```
-
-### Component Relationships
-
-```mermaid
-graph LR
-    Auth --> FM
-    Auth --> DBA
-    Auth --> Term
-    Auth --> Dep
-    Auth --> Cron
-    Auth --> SSL
-
-    FM --> FileOps[File Operations]
-    DBA --> QueryEngine[Query Engine]
-    Term --> WebSocket[WebSocket Server]
-    Dep --> GitEngine[Git Integration]
-    Cron --> Scheduler[Task Scheduler]
-    SSL --> CertManager[Certificate Manager]
-    Docker --> ContainerMgr[Container Manager]
-
-    FileOps --> FS2[Server Filesystem]
-    QueryEngine --> DBs[MySQL / PostgreSQL / SQLite]
-    GitEngine --> Remote[GitHub / GitLab]
-    ContainerMgr --> DockerDaemon[Docker Daemon]
-```
+    
 
 ## Quick Start
 
 ```bash
-# Clone the repo
-git clone https://github.com/ykrishhh/HarryPanel.git
-cd HarryPanel
-
-# Install dependencies
+cd harry-backend
 pip install -r requirements.txt
-
-# Initialize the database
-python init_db.py
-
-# Start the server
 python app.py
 ```
 
-Access at `http://your-server:5000`
-
-Default login: `admin` / `admin` (change immediately)
-
-## Architecture
-
-```
-HarryPanel/
-├── app.py                 # Flask application entry point
-├── init_db.py             # Database initialization
-├── config.py              # Configuration management
-├── requirements.txt       # Python dependencies
-├── core/
-│   ├── auth.py            # Authentication & authorization
-│   ├── file_manager.py    # File operations
-│   ├── database.py        # Database management
-│   ├── terminal.py        # WebSocket terminal
-│   ├── deployer.py        # Git deployment engine
-│   ├── cron.py            # Cron job manager
-│   ├── ssl.py             # SSL certificate management
-│   └── docker.py          # Docker integration
-├── templates/
-│   ├── dashboard.html     # Main dashboard
-│   ├── files.html         # File manager
-│   ├── databases.html     # Database admin
-│   ├── terminal.html      # Web terminal
-│   ├── settings.html      # Settings page
-│   └── login.html         # Login page
-├── static/
-│   ├── css/               # Stylesheets
-│   ├── js/                # JavaScript
-│   └── img/               # Assets
-└── README.md
-```
-
-## Configuration
-
-Edit `config.py` or set environment variables:
-
-```python
-# config.py
-SECRET_KEY = "your-secret-key"
-DATABASE = "sqlite:///harrypanel.db"
-DEFAULT_PORT = 5000
-ALLOWED_HOSTS = ["*"]
-
-# Database connections (for managed databases)
-DB_HOST = "localhost"
-DB_PORT = 3306
-DB_USER = "root"
-DB_PASS = ""
-```
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/stats` | Server statistics |
-| GET | `/api/files/<path>` | List directory |
-| POST | `/api/files/upload` | Upload file |
-| GET | `/api/databases` | List databases |
-| POST | `/api/query` | Execute SQL query |
-| POST | `/api/deploy` | Deploy from git |
-| GET | `/api/cron` | List cron jobs |
-| POST | `/api/cron` | Create cron job |
-| GET | `/api/ssl` | List certificates |
-| POST | `/api/ssl/install` | Install SSL cert |
-
-## Security
-
-- All passwords hashed with bcrypt
-- JWT tokens for API authentication
-- CSRF protection on all forms
-- Rate limiting on login attempts
-- File upload validation and sandboxing
-- SQL injection prevention via parameterized queries
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+Open http://localhost:5000
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-<div align="center">
-
-Built by [ykrishhh](https://github.com/ykrishhh) · Security Researcher & Developer
-
-*Contact: [krishy2122@gmail.com](mailto:krishy2122@gmail.com) · [Twitter @harry6ez](https://twitter.com/harry6ez) · [Telegram @harry6e](https://t.me/harry6e)*
-
-</div>
-
-<!-- SEO Keywords: harrypanel, control-panel, web-hosting, server-management, file-manager, database-admin, deployment, self-hosted, python, flask -->
+MIT — Built by [ykrishhh](https://github.com/ykrishhh)
