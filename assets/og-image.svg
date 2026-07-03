@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#000"/>
+      <stop offset="50%" style="stop-color:#0a0a1a"/>
+      <stop offset="100%" style="stop-color:#000"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Grid -->
+  <g opacity="0.03" stroke="#00ffff">
+    <line x1="0" y1="0" x2="1200" y2="630"/>
+    <line x1="1200" y1="0" x2="0" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="800" y1="0" x2="800" y2="630"/>
+    <line x1="0" y1="210" x2="1200" y2="210"/>
+    <line x1="0" y1="420" x2="1200" y2="420"/>
+  </g>
+  
+  <!-- Glow -->
+  <circle cx="600" cy="315" r="200" fill="#00ffff" opacity="0.05"/>
+  <circle cx="600" cy="315" r="100" fill="#00ffff" opacity="0.08"/>
+  
+  <!-- Logo text -->
+  <text x="600" y="280" fill="#fff" font-family="monospace" font-size="72" font-weight="bold" text-anchor="middle">&lt;HARRYPANEL/&gt;</text>
+  
+  <!-- Tagline -->
+  <text x="600" y="340" fill="#00ffff" font-family="sans-serif" font-size="28" text-anchor="middle">Web Hosting Control Panel</text>
+  
+  <!-- Features -->
+  <text x="600" y="400" fill="#666" font-family="sans-serif" font-size="18" text-anchor="middle">Deploy anywhere • No root required • 60 seconds to start</text>
+  
+  <!-- Bottom -->
+  <text x="600" y="500" fill="#333" font-family="monospace" font-size="14" text-anchor="middle">github.com/ykrishhh/HarryPanel</text>
+  
+  <!-- Border -->
+  <rect x="20" y="20" width="1160" height="590" rx="8" fill="none" stroke="#00ffff" stroke-width="1" opacity="0.2"/>
+</svg>
