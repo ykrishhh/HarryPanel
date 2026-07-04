@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HarryPanel — Firebase Control Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+@keyframes shimmer{0%{background-position:-400% center}100%{background-position:400% center}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes numPop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 8px var(--gold-glow)}50%{box-shadow:0 0 20px var(--gold-glow),0 0 40px rgba(0,212,255,.15)}}
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#05090e;--bg2:#080d14;--bg3:#0c1420;--bg4:#101c2e;--bg5:#14243a;
+  --gold:#00d4ff;--gold2:#22e5ff;--gold3:#80f0ff;
+  --gold-dim:rgba(0,212,255,.14);--gold-glow:rgba(0,212,255,.35);
+  --amber:#0088ff;
+  --rose:#ff6b6b;--mint:#00d4aa;--sky:#38bdf8;--lilac:#c084fc;
+  --text:#d4eef5;--sub:#3a6a8a;--dim:#1a3a50;
+  --border:rgba(0,212,255,.1);--border2:rgba(0,212,255,.28);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{color:var(--text);font-family:'Exo 2',sans-serif;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+
+.panel{display:flex;height:100vh;flex-direction:column}
+.topbar{background:linear-gradient(90deg,rgba(8,13,20,.97),rgba(12,18,28,.97));border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;gap:12px;padding:0 20px;flex-shrink:0;position:relative}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,.7),rgba(0,136,255,.5),transparent)}
+.tb-dots{display:flex;gap:7px}
+.td{width:13px;height:13px;border-radius:50%}
+.td-r{background:#ff5f57}.td-y{background:#febc2e}.td-g{background:#28c840}
+.tb-logo{font-size:16px;font-weight:800}
+.tb-gl{background:linear-gradient(90deg,#00d4ff,#22e5ff,#80f0ff,#00d4ff);background-size:300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3.5s linear infinite}
+.tb-pills{display:flex;gap:6px;margin-right:auto}
+.pill{font-size:10px;font-weight:700;padding:4px 11px;border-radius:20px;letter-spacing:.3px}
+.p-t{background:rgba(0,212,255,.12);color:var(--gold2)}
+.p-on{background:rgba(0,212,170,.1);color:var(--mint)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint);animation:pulse 2s infinite;display:inline-block;vertical-align:middle;margin-right:4px}
+.body{display:flex;flex:1;overflow:hidden}
+
+.sb{width:274px;flex-shrink:0;background:linear-gradient(180deg,var(--bg2),var(--bg));border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sb-list{flex:1;overflow-y:auto;padding:8px 0}
+.sb-item{padding:12px 16px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:11px;border-left:3px solid transparent}
+.sb-item:hover{background:rgba(0,212,255,.04)}
+.sb-item.active{background:rgba(0,212,255,.08);border-left-color:var(--gold)}
+.sb-item.active .sb-label{color:var(--gold2)}
+.sb-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--bg4),var(--bg5));border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.sb-text{flex:1;min-width:0}
+.sb-label{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-sub{font-size:10px;color:var(--dim);font-family:'Share Tech Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.sb-brand{text-align:center;padding:11px;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--dim);border-top:1px solid var(--border)}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.tabs{display:flex;padding:0 18px;background:linear-gradient(90deg,rgba(8,13,20,.98),rgba(12,18,28,.98));border-bottom:1px solid var(--border);flex-shrink:0;gap:2px;overflow-x:auto}
+.tabs::-webkit-scrollbar{height:0}
+.tab{padding:14px 16px;font-size:12px;font-weight:600;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;letter-spacing:.2px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--gold2);border-bottom-color:var(--gold)}
+.tab-body{flex:1;overflow-y:auto;padding:22px}
+.pane{display:none}.pane.active{display:block;animation:fadeUp .22s ease}
+
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:24px}
+.sc{background:linear-gradient(145deg,var(--bg3),var(--bg2));border:1px solid var(--border);border-radius:20px;padding:22px 20px;position:relative;overflow:hidden;transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s}
+.sc:hover{transform:translateY(-4px);box-shadow:0 18px 50px rgba(0,0,0,.5),0 0 30px rgba(0,212,255,.05)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0}
+.sc-g::before{background:linear-gradient(90deg,#00d4ff,#22e5ff)}
+.sc-a::before{background:linear-gradient(90deg,#00d4aa,#38bdf8)}
+.sc-r::before{background:linear-gradient(90deg,#ff6b6b,#ff8c00)}
+.sc-p::before{background:linear-gradient(90deg,#c084fc,#00d4ff)}
+.sv{font-size:50px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:5px;animation:numPop .4s ease}
+.sl{font-size:10px;font-weight:600;color:var(--sub);letter-spacing:1px;text-transform:uppercase}
+
+.sec-hdr{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sub);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.sec-hdr::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.tbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:22px}
+.tbl-wrap table{width:100%;border-collapse:collapse}
+.tbl-wrap th{padding:10px 16px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sub);text-align:left;background:var(--bg3)}
+.tbl-wrap td{padding:13px 16px;font-size:12px;border-top:1px solid rgba(0,212,255,.04);font-weight:600}
+.tbl-wrap tbody tr{cursor:pointer;transition:background .1s}
+.tbl-wrap tbody tr:hover{background:rgba(0,212,255,.04)}
+
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px}
+.b-on{background:rgba(0,212,170,.12);color:var(--mint)}
+.b-off{background:rgba(255,107,107,.1);color:var(--rose)}
+.b-gold{background:rgba(0,212,255,.12);color:var(--gold2)}
+.b-unk{background:rgba(234,179,8,.1);color:#eab308}
+
+.pbar{width:100%;height:5px;background:rgba(255,255,255,.07);border-radius:5px;margin-top:9px;overflow:hidden}
+.pfill{height:100%;border-radius:5px;transition:width .7s cubic-bezier(.22,1,.36,1)}
+
+/* FIREBASE DATA NODES */
+.firebase-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:13px;margin-bottom:22px}
+.fb-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;transition:border-color .2s}
+.fb-card:hover{border-color:var(--border2)}
+.fb-card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.fb-card-title{font-size:12px;font-weight:700;color:var(--gold2);font-family:'Share Tech Mono',monospace}
+.fb-card-path{font-size:10px;color:var(--dim);font-family:'Share Tech Mono',monospace}
+.fb-card-val{font-size:28px;font-weight:800;color:var(--text);margin-bottom:4px}
+.fb-card-sub{font-size:11px;color:var(--sub)}
+.fb-card-actions{display:flex;gap:6px;margin-top:12px}
+.fb-btn{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--sub);font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Exo 2',sans-serif}
+.fb-btn:hover{border-color:var(--gold);color:var(--gold2);background:var(--gold-dim)}
+.fb-btn.danger:hover{border-color:var(--rose);color:var(--rose);background:rgba(255,107,107,.1)}
+
+/* INPUT */
+.fb-input{width:100%;background:rgba(16,28,46,.7);border:1px solid rgba(0,212,255,.12);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;transition:border-color .2s}
+.fb-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(0,212,255,.1)}
+textarea.fb-input{min-height:80px;resize:vertical}
+
+.btn{padding:13px 24px;border:none;border-radius:12px;color:#020810;font-family:'Exo 2',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#22e5ff,#00d4ff,#0088ff);box-shadow:0 6px 30px rgba(0,212,255,.4);transition:all .25s cubic-bezier(.22,1,.36,1);letter-spacing:.3px}
+.btn:hover{transform:translateY(-3px);box-shadow:0 14px 42px rgba(0,212,255,.55)}
+
+.log-entry{padding:8px 12px;border-bottom:1px solid rgba(0,212,255,.04);font-family:'Share Tech Mono',monospace;font-size:11px;display:flex;gap:12px;align-items:flex-start}
+.log-time{color:var(--dim);flex-shrink:0}
+.log-msg{color:var(--text);flex:1;word-break:break-all}
+.log-type{padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;flex-shrink:0}
+.log-write{background:rgba(0,212,170,.12);color:var(--mint)}
+.log-read{background:rgba(0,212,255,.12);color:var(--gold2)}
+.log-delete{background:rgba(255,107,107,.1);color:var(--rose)}
+
+@media(max-width:768px){
+  .sb{width:60px}.sb-text,.sb-brand,.tb-pills{display:none}
+  .sb-item{justify-content:center;padding:14px 0}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .sv{font-size:36px}
+}
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <div class="topbar">
+    <div class="tb-dots"><div class="td td-r"></div><div class="td td-y"></div><div class="td td-g"></div></div>
+    <div class="tb-logo"><span class="tb-gl">HARRYPANEL</span></div>
+    <div class="tb-pills">
+      <span class="pill p-t">v9.0</span>
+      <span class="pill p-on"><span class="live-dot"></span>Firebase</span>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="sb">
+      <div class="sb-list">
+        <div class="sb-item active" data-page="dashboard">
+          <div class="sb-icon">&#9673;</div>
+          <div class="sb-text"><div class="sb-label">Dashboard</div><div class="sb-sub">real-time data</div></div>
+        </div>
+        <div class="sb-item" data-page="data">
+          <div class="sb-icon">&#128451;</div>
+          <div class="sb-text"><div class="sb-label">Data Manager</div><div class="sb-sub">CRUD operations</div></div>
+        </div>
+        <div class="sb-item" data-page="logs">
+          <div class="sb-icon">&#128196;</div>
+          <div class="sb-text"><div class="sb-label">Activity Log</div><div class="sb-sub">real-time changes</div></div>
+        </div>
+        <div class="sb-item" data-page="config">
+          <div class="sb-icon">&#9881;</div>
+          <div class="sb-text"><div class="sb-label">Config</div><div class="sb-sub">firebase settings</div></div>
+        </div>
+      </div>
+      <div class="sb-brand">harrypanel</div>
+    </div>
+
+    <div class="main">
+      <div class="tabs">
+        <div class="tab active" data-page="dashboard">Dashboard</div>
+        <div class="tab" data-page="data">Data Manager</div>
+        <div class="tab" data-page="logs">Activity Log</div>
+        <div class="tab" data-page="config">Config</div>
+      </div>
+      <div class="tab-body">
+
+        <!-- DASHBOARD -->
+        <div class="pane active" id="page-dashboard">
+          <div class="stat-grid">
+            <div class="sc sc-g">
+              <div class="sv" id="fb-total">--</div>
+              <div class="sl">Total Nodes</div>
+            </div>
+            <div class="sc sc-a">
+              <div class="sv" id="fb-writes">--</div>
+              <div class="sl">Writes (session)</div>
+            </div>
+            <div class="sc sc-r">
+              <div class="sv" id="fb-reads">--</div>
+              <div class="sl">Reads (session)</div>
+            </div>
+            <div class="sc sc-p">
+              <div class="sv" id="fb-status">--</div>
+              <div class="sl">Connection</div>
+            </div>
+          </div>
+
+          <div class="sec-hdr">Firebase Realtime Database</div>
+          <div class="fb-card" style="margin-bottom:22px">
+            <div class="fb-card-hdr">
+              <div>
+                <div class="fb-card-title">ashlovesmedline-default-rtdb</div>
+                <div class="fb-card-path">https://ashlovesmedline-default-rtdb.firebaseio.com</div>
+              </div>
+              <span class="badge b-on" id="conn-badge">Connected</span>
+            </div>
+            <div id="fb-tree" style="font-family:'Share Tech Mono',monospace;font-size:12px;max-height:400px;overflow-y:auto;padding:12px;background:rgba(0,0,0,.3);border-radius:10px;border:1px solid var(--border)"></div>
+          </div>
+
+          <div class="sec-hdr">Quick Actions</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn" onclick="addTestData()" style="padding:10px 20px;font-size:12px">+ Add Test Node</button>
+            <button class="fb-btn" onclick="refreshTree()" style="padding:10px 20px;font-size:12px;border-color:var(--gold);color:var(--gold2)">Refresh Tree</button>
+            <button class="fb-btn danger" onclick="clearAllData()" style="padding:10px 20px;font-size:12px">Clear All Data</button>
+          </div>
+        </div>
+
+        <!-- DATA MANAGER -->
+        <div class="pane" id="page-data">
+          <div class="sec-hdr">Read Node</div>
+          <div class="tbl-wrap" style="padding:16px">
+            <div style="display:flex;gap:10px;margin-bottom:12px">
+              <input class="fb-input" id="read-path" placeholder="Path (e.g. users/user1)" style="flex:1">
+              <button class="btn" onclick="readNode()" style="padding:10px 20px;font-size:12px">Read</button>
+            </div>
+            <pre id="read-result" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--mint);max-height:300px;overflow:auto;padding:12px;background:rgba(0,0,0,.3);border-radius:8px;border:1px solid var(--border);display:none"></pre>
+          </div>
+
+          <div class="sec-hdr">Write Node</div>
+          <div class="tbl-wrap" style="padding:16px">
+            <div style="display:flex;gap:10px;margin-bottom:12px">
+              <input class="fb-input" id="write-path" placeholder="Path (e.g. logs/event1)" style="flex:1">
+            </div>
+            <textarea class="fb-input" id="write-data" placeholder='{"key": "value"}'></textarea>
+            <div style="margin-top:12px;display:flex;gap:10px">
+              <button class="btn" onclick="writeNode()" style="padding:10px 20px;font-size:12px">Write JSON</button>
+              <button class="fb-btn" onclick="writeText()" style="padding:10px 20px;font-size:12px;border-color:var(--gold);color:var(--gold2)">Write as Text</button>
+            </div>
+          </div>
+
+          <div class="sec-hdr">Delete Node</div>
+          <div class="tbl-wrap" style="padding:16px">
+            <div style="display:flex;gap:10px">
+              <input class="fb-input" id="delete-path" placeholder="Path to delete" style="flex:1">
+              <button class="fb-btn danger" onclick="deleteNode()" style="padding:10px 20px;font-size:12px;border-color:var(--rose);color:var(--rose)">Delete</button>
+            </div>
+          </div>
+
+          <div class="sec-hdr">Push (Auto-ID)</div>
+          <div class="tbl-wrap" style="padding:16px">
+            <div style="display:flex;gap:10px;margin-bottom:12px">
+              <input class="fb-input" id="push-path" placeholder="Parent path (e.g. messages)" style="flex:1">
+            </div>
+            <textarea class="fb-input" id="push-data" placeholder='{"text": "hello", "ts": 1234567890}'></textarea>
+            <div style="margin-top:12px">
+              <button class="btn" onclick="pushNode()" style="padding:10px 20px;font-size:12px">Push with Auto-ID</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOGS -->
+        <div class="pane" id="page-logs">
+          <div class="sec-hdr">Real-time Activity Log</div>
+          <div class="tbl-wrap" style="max-height:600px;overflow-y:auto" id="activity-log">
+            <div style="padding:20px;text-align:center;color:var(--sub);font-size:13px">Waiting for Firebase events...</div>
+          </div>
+        </div>
+
+        <!-- CONFIG -->
+        <div class="pane" id="page-config">
+          <div class="sec-hdr">Firebase Configuration</div>
+          <div class="tbl-wrap" style="padding:16px">
+            <div style="display:grid;gap:12px">
+              <div><label style="font-size:10px;color:var(--sub);display:block;margin-bottom:4px;font-weight:700;letter-spacing:1px">DATABASE URL</label>
+              <input class="fb-input" id="cfg-dburl" value="https://ashlovesmedline-default-rtdb.firebaseio.com" readonly></div>
+              <div><label style="font-size:10px;color:var(--sub);display:block;margin-bottom:4px;font-weight:700;letter-spacing:1px">API KEY</label>
+              <input class="fb-input" id="cfg-apikey" value="AIzaSyA4wjF33mkGSK5EVh1V2sl1p6Drf0MuNCM" readonly></div>
+              <div><label style="font-size:10px;color:var(--sub);display:block;margin-bottom:4px;font-weight:700;letter-spacing:1px">APP ID</label>
+              <input class="fb-input" id="cfg-appid" value="1:241787777867:android:9d6ffc927778e5b5442ece" readonly></div>
+              <div><label style="font-size:10px;color:var(--sub);display:block;margin-bottom:4px;font-weight:700;letter-spacing:1px">STORAGE BUCKET</label>
+              <input class="fb-input" id="cfg-bucket" value="ashlovesmedline.firebasestorage.app" readonly></div>
+            </div>
+          </div>
+
+          <div class="sec-hdr">Test Connection</div>
+          <div class="tbl-wrap" style="padding:16px">
+            <button class="btn" onclick="testConnection()" style="padding:10px 20px;font-size:12px">Test Firebase Connection</button>
+            <div id="test-result" style="margin-top:12px;font-family:'Share Tech Mono',monospace;font-size:12px"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══ FIREBASE INIT ═══════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  databaseURL: "https://ashlovesmedline-default-rtdb.firebaseio.com",
+  apiKey: "AIzaSyA4wjF33mkGSK5EVh1V2sl1p6Drf0MuNCM",
+  appId: "1:241787777867:android:9d6ffc927778e5b5442ece",
+  storageBucket: "ashlovesmedline.firebasestorage.app"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let sessionWrites = 0, sessionReads = 0;
+const logs = [];
+
+/* ═══ NAV ════════════════════════════════════════════════════════════════════ */
+function switchPage(p) {
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.toggle('active', i.dataset.page === p));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === p));
+  document.querySelectorAll('.pane').forEach(n => n.classList.toggle('active', n.id === 'page-' + p));
+}
+document.querySelectorAll('.sb-item, .tab').forEach(el => el.addEventListener('click', () => switchPage(el.dataset.page)));
+
+/* ═══ HELPERS ════════════════════════════════════════════════════════════════ */
+function fmtTime(d) { return new Date(d).toLocaleTimeString(); }
+function addLog(type, msg) {
+  logs.unshift({ time: Date.now(), type, msg });
+  if (logs.length > 100) logs.pop();
+  renderLogs();
+  document.getElementById('fb-writes').textContent = sessionWrites;
+  document.getElementById('fb-reads').textContent = sessionReads;
+}
+function renderLogs() {
+  const el = document.getElementById('activity-log');
+  if (!logs.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--sub)">No activity yet</div>'; return; }
+  el.innerHTML = logs.map(l => `
+    <div class="log-entry">
+      <span class="log-time">${fmtTime(l.time)}</span>
+      <span class="log-type log-${l.type}">${l.type.toUpperCase()}</span>
+      <span class="log-msg">${l.msg}</span>
+    </div>
+  `).join('');
+}
+
+/* ═══ CONNECTION STATUS ══════════════════════════════════════════════════════ */
+const connRef = db.ref('.info/connected');
+connRef.on('value', snap => {
+  const connected = snap.val();
+  document.getElementById('fb-status').textContent = connected ? 'Online' : 'Offline';
+  document.getElementById('conn-badge').className = 'badge ' + (connected ? 'b-on' : 'b-off');
+  document.getElementById('conn-badge').textContent = connected ? 'Connected' : 'Disconnected';
+});
+
+/* ═══ DASHBOARD — TREE VIEW ══════════════════════════════════════════════════ */
+function renderTree(data, depth = 0) {
+  if (data === null || data === undefined) return '<span style="color:var(--dim)">null</span>';
+  if (typeof data !== 'object') return `<span style="color:var(--gold)">${JSON.stringify(data)}</span>`;
+  const entries = Object.entries(data);
+  document.getElementById('fb-total').textContent = entries.length;
+  let html = '<div style="padding-left:' + (depth * 16) + 'px">';
+  entries.forEach(([key, val]) => {
+    if (typeof val === 'object' && val !== null) {
+      html += `<div style="margin:2px 0"><span style="color:var(--lilac)">${key}</span> {</div>`;
+      html += renderTree(val, depth + 1);
+      html += `<div style="padding-left:${depth * 16}px">}</div>`;
+    } else {
+      html += `<div style="margin:2px 0"><span style="color:var(--lilac)">${key}</span>: <span style="color:var(--gold)">${JSON.stringify(val)}</span></div>`;
+    }
+  });
+  html += '</div>';
+  return html;
+}
+
+function refreshTree() {
+  db.ref('/').once('value', snap => {
+    sessionReads++;
+    const data = snap.val();
+    document.getElementById('fb-tree').innerHTML = data ? renderTree(data) : '<span style="color:var(--dim)">Database is empty</span>';
+    addLog('read', 'Refreshed tree view');
+  });
+}
+
+/* ═══ REALTIME LISTENER ══════════════════════════════════════════════════════ */
+db.ref('/').on('child_added', snap => {
+  addLog('write', `Node added: ${snap.key}`);
+  refreshTree();
+});
+db.ref('/').on('child_changed', snap => {
+  addLog('write', `Node changed: ${snap.key}`);
+  refreshTree();
+});
+db.ref('/').on('child_removed', snap => {
+  addLog('delete', `Node removed: ${snap.key}`);
+  refreshTree();
+});
+
+/* ═══ DATA OPERATIONS ════════════════════════════════════════════════════════ */
+function readNode() {
+  const path = document.getElementById('read-path').value.trim();
+  if (!path) return;
+  db.ref(path).once('value', snap => {
+    sessionReads++;
+    const val = snap.val();
+    const el = document.getElementById('read-result');
+    el.style.display = 'block';
+    el.textContent = val ? JSON.stringify(val, null, 2) : 'null';
+    addLog('read', `Read: /${path}`);
+  });
+}
+
+function writeNode() {
+  const path = document.getElementById('write-path').value.trim();
+  const dataStr = document.getElementById('write-data').value.trim();
+  if (!path || !dataStr) return;
+  try {
+    const data = JSON.parse(dataStr);
+    db.ref(path).set(data).then(() => {
+      sessionWrites++;
+      addLog('write', `Wrote to: /${path}`);
+    });
+  } catch (e) {
+    addLog('write', `Error: ${e.message}`);
+  }
+}
+
+function writeText() {
+  const path = document.getElementById('write-path').value.trim();
+  const data = document.getElementById('write-data').value.trim();
+  if (!path || !data) return;
+  db.ref(path).set(data).then(() => {
+    sessionWrites++;
+    addLog('write', `Wrote text to: /${path}`);
+  });
+}
+
+function deleteNode() {
+  const path = document.getElementById('delete-path').value.trim();
+  if (!path) return;
+  if (!confirm(`Delete /${path}?`)) return;
+  db.ref(path).remove().then(() => {
+    sessionWrites++;
+    addLog('delete', `Deleted: /${path}`);
+  });
+}
+
+function pushNode() {
+  const path = document.getElementById('push-path').value.trim();
+  const dataStr = document.getElementById('push-data').value.trim();
+  if (!path || !dataStr) return;
+  try {
+    const data = JSON.parse(dataStr);
+    db.ref(path).push(data).then(ref => {
+      sessionWrites++;
+      addLog('write', `Pushed to: /${path}/${ref.key}`);
+    });
+  } catch (e) {
+    addLog('write', `Error: ${e.message}`);
+  }
+}
+
+/* ═══ TEST DATA ══════════════════════════════════════════════════════════════ */
+function addTestData() {
+  const ts = Date.now();
+  db.ref(`test/${ts}`).set({
+    message: 'Hello from HarryPanel',
+    timestamp: ts,
+    version: '9.0',
+    source: 'firebase-dashboard'
+  }).then(() => {
+    sessionWrites++;
+    addLog('write', `Added test node: test/${ts}`);
+  });
+}
+
+function clearAllData() {
+  if (!confirm('Delete ALL data in the database? This cannot be undone.')) return;
+  db.ref('/').remove().then(() => {
+    sessionWrites++;
+    addLog('delete', 'Cleared all database data');
+    document.getElementById('fb-tree').innerHTML = '<span style="color:var(--dim)">Database is empty</span>';
+    document.getElementById('fb-total').textContent = '0';
+  });
+}
+
+/* ═══ TEST CONNECTION ════════════════════════════════════════════════════════ */
+function testConnection() {
+  const el = document.getElementById('test-result');
+  el.innerHTML = '<span style="color:var(--gold)">Testing connection...</span>';
+  const start = Date.now();
+  db.ref('.info/serverTimeOffset').once('value', snap => {
+    const latency = Date.now() - start;
+    const offset = snap.val();
+    el.innerHTML = `
+      <div style="color:var(--mint)">Connection successful</div>
+      <div style="color:var(--sub);margin-top:4px">Latency: ${latency}ms</div>
+      <div style="color:var(--sub)">Server offset: ${offset}ms</div>
+      <div style="color:var(--sub)">Database URL: ${firebaseConfig.databaseURL}</div>
+    `;
+    addLog('read', `Connection test passed (${latency}ms)`);
+  }).catch(err => {
+    el.innerHTML = `<div style="color:var(--rose)">Connection failed: ${err.message}</div>`;
+    addLog('write', `Connection test failed: ${err.message}`);
+  });
+}
+
+/* ═══ INIT ══════════════════════════════════════════════════════════════════ */
+refreshTree();
+</script>
+</body>
+</html>
