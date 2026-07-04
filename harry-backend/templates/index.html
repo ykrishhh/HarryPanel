@@ -156,6 +156,7 @@ textarea.db-query::placeholder{color:var(--dim)}
   .sb-item{justify-content:center;padding:14px 0}
   .main{margin-left:0}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .sv{font-size:36px}
 }
 </style>
 </head>
@@ -225,6 +226,7 @@ textarea.db-query::placeholder{color:var(--dim)}
               <div class="sv" id="mem-val">--</div>
               <div class="sl">Memory</div>
               <div class="pbar"><div class="pfill" id="mem-bar" style="width:0%;background:linear-gradient(90deg,#00d4aa,#38bdf8)"></div></div>
+              <div style="font-size:10px;color:var(--sub);margin-top:6px;font-family:'Share Tech Mono',monospace" id="mem-detail"></div>
             </div>
             <div class="sc sc-r">
               <div class="sv" id="disk-val">--</div>
@@ -232,8 +234,21 @@ textarea.db-query::placeholder{color:var(--dim)}
               <div class="pbar"><div class="pfill" id="disk-bar" style="width:0%;background:linear-gradient(90deg,#ff6b6b,#ff8c00)"></div></div>
             </div>
             <div class="sc sc-p">
-              <div class="sv" id="uptime-val">--</div>
-              <div class="sl">Uptime</div>
+              <div class="sv" id="net-val">--</div>
+              <div class="sl">Network</div>
+              <div style="font-size:10px;color:var(--sub);margin-top:6px;font-family:'Share Tech Mono',monospace" id="net-detail"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:13px;margin-bottom:22px">
+            <div style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px">
+              <div class="sec-hdr" style="margin-bottom:8px">System Info</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="sys-info"></div>
+            </div>
+            <div style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px">
+              <div class="sec-hdr" style="margin-bottom:8px">Uptime</div>
+              <div style="font-size:32px;font-weight:800;color:var(--gold2);font-family:'Share Tech Mono',monospace" id="uptime-val">--</div>
+              <div style="font-size:10px;color:var(--sub);margin-top:4px" id="uptime-since"></div>
             </div>
           </div>
 
@@ -313,16 +328,37 @@ function fmtBytes(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed
 function fmtUptime(s){const d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60);return d>0?d+'d '+h+'h':h+'h '+m+'m'}
 
 // OVERVIEW
+let prevNet={sent:0,recv:0};
 async function loadOverview(){
   try{
     const r=await fetch('/api/server/info');const d=await r.json();
-    document.getElementById('cpu-val').textContent=d.cpu.percent+'%';
+    document.getElementById('cpu-val').textContent=d.cpu.percent.toFixed(1)+'%';
     document.getElementById('cpu-bar').style.width=d.cpu.percent+'%';
-    document.getElementById('mem-val').textContent=d.memory.percent+'%';
+    document.getElementById('mem-val').textContent=d.memory.percent.toFixed(1)+'%';
     document.getElementById('mem-bar').style.width=d.memory.percent+'%';
-    document.getElementById('disk-val').textContent=d.disk.percent+'%';
+    document.getElementById('mem-detail').textContent=fmtBytes(d.memory.used)+' / '+fmtBytes(d.memory.total);
+    document.getElementById('disk-val').textContent=d.disk.percent.toFixed(1)+'%';
     document.getElementById('disk-bar').style.width=d.disk.percent+'%';
     document.getElementById('uptime-val').textContent=fmtUptime(d.uptime);
+    document.getElementById('uptime-since').textContent='Since '+new Date(d.boot_time*1000).toLocaleString();
+    document.getElementById('sys-info').innerHTML=`
+      <div style="font-size:11px;color:var(--sub)"><span style="color:var(--gold)">CPU</span> ${d.cpu.count} cores @ ${d.cpu.freq} MHz</div>
+      <div style="font-size:11px;color:var(--sub)"><span style="color:var(--gold)">RAM</span> ${fmtBytes(d.memory.total)}</div>
+      <div style="font-size:11px;color:var(--sub)"><span style="color:var(--gold)">Disk</span> ${fmtBytes(d.disk.total)}</div>
+      <div style="font-size:11px;color:var(--sub)"><span style="color:var(--gold)">Free</span> ${fmtBytes(d.memory.available)}</div>
+    `;
+  }catch(e){}
+  try{
+    const r=await fetch('/api/server/network');const n=await r.json();
+    if(prevNet.sent>0){
+      const speed=(n.bytes_sent-prevNet.sent);
+      document.getElementById('net-val').textContent=fmtBytes(n.bytes_sent);
+      document.getElementById('net-detail').innerHTML='↑ '+fmtBytes(n.bytes_sent)+'<br>↓ '+fmtBytes(n.bytes_recv);
+    }else{
+      document.getElementById('net-val').textContent=fmtBytes(n.bytes_sent);
+      document.getElementById('net-detail').innerHTML='↑ '+fmtBytes(n.bytes_sent)+'<br>↓ '+fmtBytes(n.bytes_recv);
+    }
+    prevNet={sent:n.bytes_sent,recv:n.bytes_recv};
   }catch(e){}
   try{
     const r=await fetch('/api/server/processes');const p=await r.json();

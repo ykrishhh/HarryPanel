@@ -1,36 +1,12 @@
 import os
 import subprocess
 import time as _time
+import psutil
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO
 
-# psutil mock for Android/Termux (no native build support)
-class _Psutil:
-    def cpu_percent(self, interval=0): return 12.5
-    def cpu_count(self): return 4
-    def cpu_freq(self): return type('F', (), {'current': 1800})()
-    def virtual_memory(self): return type('M', (), {'total': 4*1024**3, 'used': int(2.5*1024**3), 'percent': 62})()
-    def disk_usage(self, p): return type('D', (), {'total': 128*1024**3, 'used': int(58*1024**3), 'percent': 45})()
-    def boot_time(self): return _time.time() - 86400
-    def process_iter(self, attrs):
-        procs = [
-            {'pid':1,'name':'init','cpu_percent':0.1,'memory_percent':0.2,'status':'running'},
-            {'pid':2,'name':'kworker/0:1','cpu_percent':0.5,'memory_percent':0.1,'status':'running'},
-            {'pid':127,'name':'sshd','cpu_percent':0.0,'memory_percent':0.8,'status':'sleeping'},
-            {'pid':337,'name':'python3','cpu_percent':15.3,'memory_percent':8.2,'status':'running'},
-            {'pid':412,'name':'node','cpu_percent':3.2,'memory_percent':4.1,'status':'running'},
-            {'pid':501,'name':'nginx','cpu_percent':0.3,'memory_percent':1.2,'status':'sleeping'},
-            {'pid':612,'name':'cron','cpu_percent':0.0,'memory_percent':0.3,'status':'sleeping'},
-            {'pid':723,'name':'dbus-daemon','cpu_percent':0.0,'memory_percent':0.4,'status':'sleeping'},
-        ]
-        class _P:
-            def __init__(self, d): self._d = d
-            def __getitem__(self, k): return self._d.get(k)
-            @property
-            def info(self): return self._d
-        return [_P(p) for p in procs]
-
-psutil = _Psutil()
+# Prime CPU percent (first call always returns 0.0)
+psutil.cpu_percent(interval=0.1)
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -45,9 +21,19 @@ def server_info():
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage('/')
     boot = psutil.boot_time()
+    freq = psutil.cpu_freq()
     return jsonify({
-        'cpu': {'percent': psutil.cpu_percent(), 'count': psutil.cpu_count(), 'freq': psutil.cpu_freq().current},
-        'memory': {'total': mem.total, 'used': mem.used, 'percent': mem.percent},
+        'cpu': {
+            'percent': psutil.cpu_percent(),
+            'count': psutil.cpu_count(),
+            'freq': freq.current if freq else 0,
+        },
+        'memory': {
+            'total': mem.total,
+            'used': mem.used,
+            'available': getattr(mem, 'available', mem.total - mem.used),
+            'percent': mem.percent,
+        },
         'disk': {'total': disk.total, 'used': disk.used, 'percent': disk.percent},
         'boot_time': boot, 'uptime': _time.time() - boot,
     })
@@ -58,8 +44,15 @@ def server_processes():
     for p in psutil.process_iter(['pid','name','cpu_percent','memory_percent','status']):
         try:
             info = p.info
-            procs.append({'pid':info['pid'],'name':info['name'],'cpu':info['cpu_percent'] or 0,'memory':round(info['memory_percent'] or 0,1),'status':info['status']})
-        except: pass
+            procs.append({
+                'pid': info['pid'],
+                'name': info['name'] or 'unknown',
+                'cpu': round(info['cpu_percent'] or 0, 1),
+                'memory': round(info['memory_percent'] or 0, 1),
+                'status': info['status'] or 'unknown',
+            })
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
     procs.sort(key=lambda x: x['cpu'], reverse=True)
     return jsonify(procs[:50])
 
@@ -148,6 +141,16 @@ def db_query():
 @app.route('/api/deploy/status')
 def deploy_status():
     return jsonify({'repo':'ykrishhh/HarryPanel','branch':'main','last_deploy':'2026-07-03T12:59:03Z','status':'active','url':'https://harrypanel.up.railway.app'})
+
+@app.route('/api/server/network')
+def server_network():
+    net = psutil.net_io_counters()
+    return jsonify({
+        'bytes_sent': net.bytes_sent,
+        'bytes_recv': net.bytes_recv,
+        'packets_sent': net.packets_sent,
+        'packets_recv': net.packets_recv,
+    })
 
 @socketio.on('terminal_exec')
 def handle_terminal_exec(data):
