@@ -283,3 +283,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 Made with ❤️ by [Krish](https://github.com/ykrishhh) | [Portfolio](https://harrydev.one) | [Twitter](https://x.com/ykrishhh)
 
 </div>
+
+## Architecture
+
+Explore interactive diagrams of this project's architecture: [docs/architecture.html](docs/architecture.html).
